@@ -18,8 +18,15 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatResponse> chat(@RequestBody ChatRequest request) {
-        log.info("Chat Request: {}", request);
-        String answer = chatService.getAnswer(request.getMessage());
+        log.info("Chat Request - sessionId={}", request.getSessionId());
+
+        String answer = chatService.getAnswer(request.getSessionId(), request.getMessage());
         return ResponseEntity.ok(new ChatResponse(answer));
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<Void> reset(@RequestBody ChatRequest request) {
+        chatService.reset(request.getSessionId());
+        return ResponseEntity.ok().build();
     }
 }

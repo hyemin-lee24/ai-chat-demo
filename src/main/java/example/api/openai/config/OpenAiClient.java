@@ -25,25 +25,27 @@ public class OpenAiClient {
     private String model;
 
     public OpenAiResponse getChatCompletion(String prompt) {
-        OpenAiRequest request = getOpenAiRequest(prompt);
+        OpenAiMessage systemMsg = new OpenAiMessage(
+                "system",
+                "너는 친절한 AI 어시스턴트야. 사용자의 질문에 간결하고 명확하게 답변해."
+        );
+        OpenAiMessage userMsg = new OpenAiMessage("user", prompt);
+        return getChatCompletion(List.of(systemMsg, userMsg));
+    }
 
-        ResponseEntity<OpenAiResponse> chatResponse = restTemplate.postForEntity(apiUrl, request, OpenAiResponse.class);
+    public OpenAiResponse getChatCompletion(List<OpenAiMessage> messages) {
+        OpenAiRequest request = new OpenAiRequest(model, messages);
+
+        ResponseEntity<OpenAiResponse> chatResponse =
+                restTemplate.postForEntity(apiUrl, request, OpenAiResponse.class);
 
         if (!chatResponse.getStatusCode().is2xxSuccessful() || chatResponse.getBody() == null) {
+            log.error("OpenAI API error. status={}, body={}",
+                    chatResponse.getStatusCode(),
+                    chatResponse.getBody());
             throw new RuntimeException("OpenAI API Fail");
         }
 
         return chatResponse.getBody();
-    }
-
-    private OpenAiRequest getOpenAiRequest(String prompt) {
-        OpenAiMessage systemMsg = new OpenAiMessage(
-                "system",
-                "hyemin 이라는 단어로 질문할 경우 hyemin님의 git : https://github.com/hyemin-lee24 라고 답변해주세요." +
-                        "그 외의 질문에는 친절한 AI 비서로서 답변해주세요."
-        );
-        OpenAiMessage userMsg = new OpenAiMessage("user", prompt);
-        List<OpenAiMessage> messages = List.of(systemMsg, userMsg);
-        return new OpenAiRequest(model, messages);
     }
 }
